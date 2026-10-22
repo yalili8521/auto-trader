@@ -1,0 +1,39 @@
+[project]
+name = "auto-trader"
+version = "0.1.0"
+description = "Live TradingView webhook pipeline for MGC (Webull futures), TQQQ (Webull equity), BTC (Alpaca crypto), and QQQ options (Alpaca)."
+requires-python = ">=3.12"
+
+# Minimal runtime dependencies. Intentionally narrow — this is a live
+# trading surface and we want a small, understood dependency set. If a
+# new executor is added, declare its deps here explicitly.
+dependencies = [
+    # Webhook server
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.30.0",
+    "nest-asyncio>=1.6.0",
+
+    # Broker SDKs
+    "webull-openapi-python-sdk>=2.0.2",  # Webull OpenAPI SDK (MGC + TQQQ) — imports as `webull`
+    "alpaca-py>=0.33.0",       # Alpaca Trading API (BTC + QQQ options)
+
+    # Utilities
+    "requests>=2.32.0",        # Discord webhook alerts
+    "yfinance>=0.2.40",        # optional price fallback in webhook_executor
+    "python-dateutil>=2.9.0",
+]
+
+[project.scripts]
+auto-trader = "main:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/gold_scalper"]
+
+[tool.uv]
+# Pin Python to 3.12 (matches quantitivestocks). Ensures the Webull SDK
+# and zoneinfo stdlib behave identically to the tested environment.
+python-preference = "only-managed"

@@ -1,0 +1,11 @@
+{
+  "_note": "2026-10-07: repointed to a Tradovate account trading MNQ 5m via the 'MNQ SMC v2' TradingView strategy. symbol=MNQ=F is the Yahoo ticker for the price-comparison log. pip_value=0.5 makes the executor's P&L math book $2 per index point per contract (MNQ multiplier); the executor computes pnl = (price_diff / pip_value) * contracts at $1 per pip. TP split 1+1+0+0 keeps runner_contracts at 0 for base_contracts=2. base_contracts=2 and daily_loss_limit=-200 are caps sized for a small account; the server also caps per-order size via TRADOVATE_MAX_POSITION_QTY in .env. Previous: GC=F / pip_value 0.10 / base_contracts 6 / TP 2+2+1+1 / daily_loss_limit -1000 (Walk The Dog on MGC).",
+  "symbol": "MNQ=F",
+  "pip_value": 0.5,
+  "base_contracts": 2,
+  "tp1_contracts": 1,
+  "tp2_contracts": 1,
+  "tp3_contracts": 0,
+  "tp4_contracts": 0,
+  "daily_loss_limit": -200.0
+}

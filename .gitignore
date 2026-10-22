@@ -1,0 +1,48 @@
+# === Secrets — never commit ===
+secrets/
+conf/token.txt
+
+# === Runtime state — per-machine ===
+outputs/
+!outputs/.gitkeep
+
+# === Python artifacts ===
+.venv/
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.egg-info/
+build/
+dist/
+.pytest_cache/
+
+# === Editor / OS ===
+.vscode/
+.idea/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# === Webull SDK logs (can contain credentials if SDK redaction fails) ===
+webull_trade_sdk.log
+*.log
+
+# === Added 2026-10-21 for the public repo ===
+# Webull token cache backups and anything else under conf/
+conf/
+# Claude Code session settings: permission log contains test commands with real payloads
+.claude/
+# Rotated logs (webull_trade_sdk.log.2026-04-20_08 etc.)
+*.log.*
+# Pine Script strategy sources are not published (strategy IP); the repo is the execution layer
+src/gold_scalper/pine/
+# Yahoo cache pickles / stray tmp files if they ever land outside outputs/
+*.pkl
+*.tmp
+
+# allow only the example env file through
+!secrets/
+secrets/*
+!secrets/.env.example
