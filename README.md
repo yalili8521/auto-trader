@@ -71,7 +71,7 @@ No broker account or network needed; brokers are mocked.
 ```
 .venv\Scripts\python.exe -m unittest test_tradovate_executor   # 49 tests: auth, order placement, position snapshot, size cap, reconcile paths
 .venv\Scripts\python.exe -m unittest test_nt_executor          # 16 tests: NinjaTrader TCP bridge protocol, ACK/REJECT, reconnect
-.venv\Scripts\python.exe -m unittest test_alert_to_executor    # 11 tests: alert payload -> router -> broker (6 fail, 2 error: stale MagicMock fixtures from before the startup reconcile was added; kept to be fixed, not hidden)
+.venv\Scripts\python.exe -m unittest test_alert_to_executor    # 11 tests: alert payload -> router -> broker, run synchronously against the same executor call the worker queue makes
 ```
 
 ## Running it

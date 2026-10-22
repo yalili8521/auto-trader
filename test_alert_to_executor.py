@@ -53,14 +53,17 @@ def route(body: dict):
         return auth_err
     ticker = body.get("ticker", "").strip().upper()
     norm = ticker.replace("/", "").replace("-", "")
+    # The live server hands each body to an ExecutorWorker queue; here we run
+    # the same executor call the worker would, synchronously, so assertions
+    # can inspect the mocked broker right after the call.
     if srv._webull_executor and (norm in srv._WEBULL_TICKERS
                                  or ticker in srv._WEBULL_TICKERS):
-        return srv._handle_webull(body)
+        return srv._webull_executor.execute(body)
     if norm in srv._QQQ_TICKERS or ticker in srv._QQQ_TICKERS:
-        return srv._handle_qqq(body)
+        return srv._qqq_executor.execute(body)
     if ticker in srv._BTC_TICKERS:
-        return srv._handle_btc(body)
-    return srv._handle_gold(body)
+        return srv._btc_executor.execute(body)
+    return srv._gold_executor.execute(srv._gold_executor.parse_signal(body))
 
 
 def _redirect_state(executor, tmpdir: str, prefix: str) -> None:
@@ -106,6 +109,7 @@ class AlertToExecutorE2E(unittest.TestCase):
         broker = MagicMock()
         broker.live_orders = False  # don't try to query live equity
         broker.get_live_equity.return_value = 5000.0
+        broker.get_position_qty.return_value = 0  # startup reconcile sees a flat broker
         broker.place_order.return_value = {
             "success": True, "order_id": "MOCK-MGC-001",
         }
@@ -147,7 +151,8 @@ class AlertToExecutorE2E(unittest.TestCase):
         self.assertIsNotNone(ex.position)
         self.assertEqual(ex.position.direction, "LONG")
         self.assertEqual(ex.position.remaining_contracts, 6)
-        self.assertEqual(resp.status_code, 200)
+        self.assertIsInstance(resp, dict)
+        self.assertNotIn("error", resp)
 
     def test_gold_tv_format_short_entry_routes_to_broker(self):
         """TV format {"action":"sell","comment":"Short Entry"} -> SELL order."""
@@ -201,6 +206,21 @@ class AlertToExecutorE2E(unittest.TestCase):
         )
         patcher_gist.start()
         self.addCleanup(patcher_gist.stop)
+        # Broker position query: report flat, so the startup reconcile and the
+        # pre-decision sync see a reachable, empty account instead of retrying.
+        patcher_pos = patch.object(
+            tqqq_mod.WebullTQQQExecutor, "get_broker_position_qty", return_value=0,
+        )
+        patcher_pos.start()
+        self.addCleanup(patcher_pos.stop)
+        # Startup reconcile reads the full broker position over the SDK and
+        # retries with sleeps when it gets nothing; the tests reset state by
+        # hand right after construction, so skip it.
+        patcher_startup = patch.object(
+            tqqq_mod.WebullTQQQExecutor, "_reconcile_on_startup", return_value=None,
+        )
+        patcher_startup.start()
+        self.addCleanup(patcher_startup.stop)
 
         ex = tqqq_mod.WebullTQQQExecutor(
             app_key="test_key", app_secret="test_secret",
@@ -435,7 +455,8 @@ class AlertToExecutorE2E(unittest.TestCase):
         # First arg: option symbol; second: side
         args = ex._submit_order.call_args.args
         self.assertEqual(args[0], "QQQ250101C00500000")
-        self.assertEqual(resp.status_code, 200)
+        self.assertIsInstance(resp, dict)
+        self.assertNotIn("error", resp)
 
     # ── Routing precedence ──
 
